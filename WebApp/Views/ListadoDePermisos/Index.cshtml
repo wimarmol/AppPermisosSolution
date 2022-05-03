@@ -1,0 +1,131 @@
+﻿@{
+}
+<div class="card  container">
+    <input type="hidden"  id="inputTab" value="0">
+    <div>
+        <div class="card-header text-lg">Listado de permisos</div>
+        <div class="card-footer row">
+            <div id="idFechaBusqueda" class="input-group input-group-md col-lg-10">
+                <input type="datetime-local" class="form-control" id="inputFechaInicio">
+                <input type="datetime-local" class="form-control" id="inputFechaFin">
+                <select class="form-control browser-default custom-select " id="selectTipoPermiso" disabled
+                        asp-items='@(new SelectList(ViewBag.TipoPermisos,"Id","Descripcion"))'>
+                    <option value=0>Todos.. </option>
+                </select>
+                <div class="input-group-append">
+                    <button class="btn btn-info btn-sm" type="button" id="search">
+                        Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <nav>
+                <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
+                    <a class="nav-item nav-link active" id="nav-amount-tab" data-toggle="tab" href="#nav-amount"
+                       role="tab" aria-controls="nav-amount" aria-selected="true" onclick="amount()">
+                        <Strong>Empleados y cantidad de permisos</Strong>
+                    </a>
+                    <a class="nav-item nav-link" id="nav-types-tab" data-toggle="tab" href="#nav-types"
+                       role="tab" aria-controls="nav-types" aria-selected="false" onclick="types()">
+                        <Strong>Empleados con todos los tipos de permisos</Strong>
+                    </a>
+                </div>
+            </nav>
+            <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-amount" role="tabpanel" aria-labelledby="nav-amount-tab">
+                    <div class="table-responsive">
+                        <table id="tableAmount" class="table table-bordered table-striped" >
+                            <thead>
+                                <tr>
+                                    <th>Apellidos Empleado</th>
+                                    <th>Nombre Empleado</th>
+                                    <th>Cantidad Permisos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <div class="tab-pane fade" id="nav-types" role="tabpanel" aria-labelledby="nav-solar-types">
+                    <div class="table-responsive">
+                        <table id="tableTypes" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Apellidos Empleado</th>
+                                    <th>Nombre Empleado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+        </div>
+    </div>
+</div>
+<script>
+    const amount = () => {        
+        //document.getElementById('selectTipoPermiso').setAttribute('disabled', '');
+        inputTab.value = 0;
+        //selectTipoPermiso.value = 0;
+    };
+    const types = () => {        
+        inputTab.value = 1;
+        //document.getElementById('selectTipoPermiso').removeAttribute('disabled');
+    };
+
+    const buildBodyTable = (dataset = [], table, props) => {
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = '';
+        dataset.forEach((item) => {
+            const row = document.createElement("tr");
+            let td;
+            props.forEach((prop) => {
+                add_td(row, td, item, prop);
+            });            
+            tbody.append(row);
+        });
+    };   
+
+    const sendReceive = async (url, data) => {
+        let method = "POST"
+        let response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': "application/json; charset=utf-8" },
+            body: JSON.stringify(data),
+        });
+        response = await response.json();
+        if (response.lista != null) {
+            return response.lista;
+        } else {
+            message("alertaError", "Error! No se pudo enviar la solicitud");
+            let empty = [];
+            return null;
+        }
+    };
+
+    window.addEventListener('load', async () => {
+        inputFechaInicio.value = dateTimeSet(new Date());
+        inputFechaFin.value = dateTimeSet(new Date());
+        search.onclick = async () => {            
+            let fechaHoraInicioPermiso = inputFechaInicio.value;
+            let fechaHoraFinPermiso = inputFechaFin.value;
+            const data = {
+                'FechaHoraInicioPermiso': fechaHoraInicioPermiso,
+                'FechaHoraFinPermiso': fechaHoraFinPermiso,
+            };
+            if (inputTab.value > 0) {
+                buildBodyTable(await sendReceive("../../ListadoDePermisos/listEmpleadoTodosPermisos", data), tableTypes, ["apellidosEmpleado", "nombreEmpleado"]);           
+            } else {
+                buildBodyTable(await sendReceive("../../ListadoDePermisos/listPermisoEmpleadoCantidad", data), tableAmount, ["apellidosEmpleado", "nombreEmpleado", "cantidad"]);           
+            }            
+        };
+    }, false);
+</script>

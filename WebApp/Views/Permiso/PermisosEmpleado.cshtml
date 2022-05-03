@@ -1,0 +1,200 @@
+﻿@model BLL.Empleado;
+@{
+}
+<div class="container-fluid">
+    <h6>Permisos de: @Model.NombreEmpleado @Model.ApellidosEmpleado</h6>
+    <div class="table-responsive">
+        <input id="inputIdEmpleado" value="@Model.Id" type="hidden">
+        <table id="tablePermisosEmpleado" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="width : 40%">Tipo Permiso</th>
+                    <th style="width : 20%">Incio</th>
+                    <th style="width : 20%">Fin</th>
+                    <th style="width : 20%"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var permiso in Model.Permisos)
+                {
+                    <tr id="@permiso.Id">
+                        <td class="tipoPermiso">@permiso.TipoPermiso</td>
+                        <td class="inicio">@permiso.FechaHoraInicioPermiso</td>
+                        <td class="fin">@permiso.FechaHoraFinPermiso</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="editPermiso(@permiso.Id)">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deletePermiso(@permiso.Id)">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Modal editar permiso -->
+<div id="modalEditPermiso" class="modal fade" role="document">
+    <div class="modal-dialog modal-md">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Permiso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="card-body">
+                    <input id="inputIdPermiso" value="0" type="hidden">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="selectTipoPermiso">Tipo permiso</label>
+                                <select class="form-control browser-default custom-select " id="selectTipoPermiso"
+                                        asp-items='@(new SelectList(ViewBag.TipoPermisos,"Id","Descripcion"))'>
+                                    <option value=0>Seleccione tipo permiso.. </option>
+                                </select>
+                                <div id="alertaSelectTipoPermiso" class="message-error-tooltip hide"></div>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label for="inputFechaHoraInicio">Fecha hora inicio</label>
+                                <input type="datetime-local" class="form-control" id="inputFechaHoraInicio">
+                                <div id="alertaInputFechaHoraInicio" class="message-error-tooltip hide"></div>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label for="inputFechaHoraFin">Fecha hora fin</label>
+                                <input type="datetime-local" class="form-control" id="inputFechaHoraFin">
+                                <div id="alertaInputFechaHoraFin" class="message-error-tooltip hide"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnUpdatePermiso">Actualizar</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script>
+    const editPermiso = async (id) => {
+        const data = {
+            'Id': id,
+        };
+        let url = "../../Permiso/get";
+        let method = "POST"
+        let response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': "application/json; charset=utf-8" },
+            body: JSON.stringify(data),
+        });
+        response = await response.json();
+        if (response.permiso != null) {
+            inputIdPermiso.value = response.permiso.id;
+            selectTipoPermiso.value = response.permiso.tipoPermisoId;
+            inputFechaHoraInicio.value = dateTimeSet(new Date(response.permiso.fechaHoraInicioPermiso));
+            inputFechaHoraFin.value = dateTimeSet(new Date(response.permiso.fechaHoraFinPermiso));
+            console.log(id);
+            $("#modalEditPermiso").modal("show");
+        } else {
+            message("alertaError", "No se pudo enviar la petición");
+        }
+    };
+
+    const deletePermiso = async (id) => {
+        const data = {
+            'Id': id,
+        };
+        let url = "../../Permiso/delete";
+        let method = "DELETE"
+        let response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': "application/json; charset=utf-8" },
+            body: JSON.stringify(data),
+        });
+        response = await response.json();
+        if (response.id > 0) {
+            var item = "#" + response.id;
+            $("#tablePermisosEmpleado tbody").find(item).children().remove();
+            message("alertaOK", "El elemento fue eliminado");            
+        } else if (response.id < 0) {
+            message("alertaError", "Error! No se pudo enviar la solicitud");
+        } else {
+            message("alertaError", "No se puede eliminar empleado tiene permisos registrados");
+        }
+    };
+
+   
+    window.addEventListener('load', async () => {
+
+        const validatePermiso = (tipoPermisoId, fechaHoraInicioPermiso, fechaHoraFinPermiso) => {
+            let valid = true;
+            let difference = (new Date(fechaHoraFinPermiso)) - (new Date(fechaHoraInicioPermiso));
+            let differenceDays = Math.ceil(difference / (1000 * 3600 * 24));
+            if (difference <= 0) {
+                alertMessage("inputFechaHoraInicio", "alertaInputFechaHoraInicio", "La fecha inicial debe ser menor a la fecha final");
+                valid = false;
+            };
+            if (differenceDays > 30) {
+                alertMessage("inputFechaHoraFin", "alertaInputFechaHoraFin", "El permiso no debe ser mayor a 30 días");
+                valid = false;
+            };
+            if (tipoPermisoId == 0) {
+                alertMessage("selectTipoPermiso", "alertaSelectTipoPermiso", "Seleccione un tipo de permiso");
+                valid = false;
+            };
+            return valid;
+        };
+
+        btnUpdatePermiso.onclick = async () => {
+            let tipoPermisoId = selectTipoPermiso.value;
+            let tipoPermisoTxt = selectTipoPermiso.options[selectTipoPermiso.selectedIndex].text;
+            let fechaHoraInicioPermiso = inputFechaHoraInicio.value;
+            let fechaHoraFinPermiso = inputFechaHoraFin.value;
+            let id = inputIdPermiso.value;
+            if (validatePermiso(tipoPermisoId, fechaHoraInicioPermiso, fechaHoraFinPermiso)) {
+                const data = {
+                    'Id': id,
+                    'EmpleadoId': inputIdEmpleado.value,
+                    'TipoPermisoId': tipoPermisoId,
+                    'FechaHoraInicioPermiso': fechaHoraInicioPermiso,
+                    'FechaHoraFinPermiso': fechaHoraFinPermiso,
+                };
+                let url = "../../Permiso/update";
+                let method = "PUT"
+                let messageTxt = "Permiso actualizado";
+                let response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': "application/json; charset=utf-8" },
+                    body: JSON.stringify(data),
+                });
+                response = await response.json();
+                if (response.id > 0) {
+                    console.log(tipoPermisoTxt);
+
+                    let item = "#" + response.id;
+                    $("#tablePermisosEmpleado tbody")
+                        .find(item)
+                        .children("td.tipoPermiso")
+                        .html(tipoPermisoTxt);
+                    $("#tablePermisosEmpleado tbody")
+                        .find(item)
+                        .children("td.inicio")
+                        .html(dateTimeSetStandar(new Date(fechaHoraInicioPermiso)));
+                    $("#tablePermisosEmpleado tbody")
+                        .find(item)
+                        .children("td.fin")
+                        .html(dateTimeSetStandar(new Date(fechaHoraFinPermiso)));
+                    $("#modalEditPermiso").modal("hide");
+                    message("alertaOK", messageTxt);
+                } else if (response.id < 0) {
+                    message("alertaError", "Error! No se pudo enviar la solicitud");
+                } else {
+                    message("alertaError", "Existe permisos registrados en el rango de fechas que seleccionó");
+                }
+            };
+        };
+    }, false);
+</script>
+

@@ -1,0 +1,34 @@
+﻿@model BLL.Permiso
+@{    
+}
+<div class="container-fluid">    
+    <div class="table-responsive">
+        <table id="tableEmpleado" class="table table-bordered table-striped ">
+            <thead>
+                <tr>
+                    <th style="width : 60%">Empleado</th>
+                    <th style="width : 40%"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var empleado in Model.Empleados)
+                {
+                    <tr id="@empleado.Id">
+                        <td>@empleado.NombreEmpleado @empleado.ApellidosEmpleado</td>
+                        <td>
+                            <a asp-controller="Permiso" asp-action="PermisosEmpleado" asp-route-id="@empleado.Id"
+                                    class="btn btn-info btn-sm">Ver Permisos</a>
+                            <a asp-controller="Permiso" asp-action="Nuevo" asp-route-id="@empleado.Id"
+                               class="btn btn-primary btn-sm">Añadir Permiso</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>    
+</div>
+<script>
+    const viewPermisosEmpleado = () => {
+        console.log("ir a svista")
+    }
+</script>

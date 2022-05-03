@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="f5b8bd914f304116a9c05048103a2aa6" Name="Diagram1">
+        <EntityTypeShape EntityType="PermisosModel.Empleado" Width="1.5" PointX="0.75" PointY="1" IsExpanded="true" />
+        <EntityTypeShape EntityType="PermisosModel.Permiso" Width="1.5" PointX="3" PointY="1" IsExpanded="true" />
+        <EntityTypeShape EntityType="PermisosModel.sysdiagrams" Width="1.5" PointX="7.625" PointY="3.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="PermisosModel.TipoPermiso" Width="1.5" PointX="0.75" PointY="5.375" IsExpanded="true" />
+        <AssociationConnector Association="PermisosModel.FK_PermisoEmpleado" ManuallyRouted="false" />
+        <AssociationConnector Association="PermisosModel.FK_PermisoTipoPermiso" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

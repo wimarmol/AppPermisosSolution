@@ -1,0 +1,226 @@
+﻿@{
+}
+<div>
+    <h5>Listado empleados</h5>
+    <button type="button" class="btn btn-sm btn-primary" onclick="addEmpleado()">Añadir Empleado</button>
+    <div class="table-responsive">
+        <table id="tableEmpleado" class="table table-condensed  table-bordered table-striped table-font-min">
+            <thead>
+                <tr>
+                    <th>Nombre Empleado</th>
+                    <th>Apellido Empleado</th>
+                    <th>Fecha Nacimiento</th>
+                    <th>Fecha Ingreso</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Modal nuevo empleado -->
+<div id="modalNuevoPaciente" class="modal fade" role="document">
+    <div class="modal-dialog modal-md">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Datos Empleado</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="card-body">
+                    <input id="inputIdEmpleado" value="0" type="hidden">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="inputNombreEmpleado">Nombres</label>
+                                <input type="text" class="form-control" id="inputNombreEmpleado" placeholder="Ingrese nombre o nombres">
+                                <div id="alertaNombreEmpleado" class="message-error-tooltip hide"></div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <label for="inputApellidosEmpleado">Apellidos</label>
+                                <input type="text" class="form-control" id="inputApellidosEmpleado" placeholder="Ingrese apellidos">
+                                <div id="alertaApellidosEmpleado" class="message-error-tooltip hide"></div>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label for="inputFechaNacimientoEmpleado">Fecha Nacimiento</label>
+                                <input type="date" class="form-control" id="inputFechaNacimientoEmpleado">
+                                <div id="alertaFechaNacimientoEmpleado" class="message-error-tooltip hide"></div>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label for="inputFechaIngresoEmpleado">Fecha Ingreso</label>
+                                <input type="date" class="form-control" id="inputFechaIngresoEmpleado">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnSaveEmpleado">Grabar</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script>
+    const loadData = async () => {
+        let url = "../Empleado/list";
+        let response = await fetch(url, {
+            method: "GET",
+            headers: { 'Content-Type': "application/json; charset=utf-8" },
+        });
+        response = await response.json();
+        if (response.lista !== null) {            
+            buildBodyTable(response.lista, tableEmpleado, ["nombreEmpleado","apellidosEmpleado","fechaNacimiento","fechaIngreso"], editElement, deleteElement);
+        } else {
+            message("alertaError", "Error! La lista no se pudo desplegar");
+        }
+    };
+    const buildBodyTable = (dataset = [], table, props, editFunction, deleteFunction) => {
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = '';
+        dataset.forEach((item) => {
+            const row = document.createElement("tr");
+            let td;
+            props.forEach((prop) => {
+                add_td(row, td, item, prop);
+            });
+            const tdAction = document.createElement("td");
+            tdAction.className = "center";
+            const btnEdit = document.createElement("button");
+            const btnDelete = document.createElement("button");
+            btnDelete.className = "bnt btn-sm btn-outline-primary ml-2";
+            btnEdit.className = "bnt btn-sm btn-outline-danger pl-2";
+            btnEdit.textContent = "Editar";
+            btnDelete.textContent = "Eliminar";
+            btnEdit.onclick = () => {
+                editFunction(item);
+            };
+            btnDelete.onclick = () => {
+                deleteFunction(item);
+            };
+            tdAction.append(btnEdit);
+            tdAction.append(btnDelete);
+            row.append(tdAction);
+            tbody.append(row);
+        });       
+                
+        
+    };  
+
+    const editElement = (item) => {
+        console.log(item);
+        inputIdEmpleado.value = item.id;
+        inputNombreEmpleado.value = item.nombreEmpleado;
+        inputApellidosEmpleado.value = item.apellidosEmpleado;
+        inputFechaNacimientoEmpleado.value = dateSet(new Date(item.fechaNacimiento));
+        inputFechaIngresoEmpleado.value = dateSet(new Date(item.fechaIngreso));
+        btnSaveEmpleado.textContent = "Actualizar";
+        $("#modalNuevoPaciente").modal("show");
+    };
+
+    const deleteElement = async (item) => {
+        let url = "../Empleado/delete"
+        const data = {
+            'Id': item.id,
+        };
+        let response = await fetch(url, {
+            method: "DELETE",
+            headers: { 'Content-Type': "application/json; charset=utf-8" },
+            body: JSON.stringify(data),
+        });
+        response = await response.json();
+        if (response.id > 0) {
+            await loadData();
+            message("alertaOK", "El elemento fue eliminado");
+            reset();
+        } else if (response.id < 0) {
+            message("alertaError", "Error! No se pudo enviar la solicitud");
+        } else {
+            message("alertaError", "No se puede eliminar empleado tiene permisos registrados");
+        }
+    };
+
+    const reset = () => {
+        inputIdEmpleado.value = 0;
+        inputNombreEmpleado.value = "";
+        inputApellidosEmpleado.value = "";
+        inputFechaNacimientoEmpleado.value = dateSet(new Date());
+        inputFechaIngresoEmpleado.value = dateSet(new Date());        
+    };
+
+    const addEmpleado = () => {
+        reset();
+        btnSaveEmpleado.textContent = "Grabar";
+        $("#modalNuevoPaciente").modal("show");
+    };
+
+    const validate = (nombre, apellidos, fechaNacimiento) => {
+        let valid = true;
+        let years = new Date(new Date() - new Date(fechaNacimiento)).getFullYear() - 1970;
+        console.log(inputApellidosEmpleado.value);
+        if (years < 18) {
+            alertMessage("inputFechaNacimientoEmpleado", "alertaFechaNacimientoEmpleado", "El empleado debe ser mayor de 18 años");
+            valid = false;
+        };
+        if (apellidos === "") {
+            alertMessage("inputApellidosEmpleado", "alertaApellidosEmpleado", "Ingrese los apellidos");
+            valid = false;
+        };
+        if (nombre === "") {
+            alertMessage("inputNombreEmpleado", "alertaNombreEmpleado", "Ingrese el nombre");
+            valid = false;
+        };
+        return valid;
+    };
+
+    window.addEventListener('load', async () => {
+        await loadData();
+        btnSaveEmpleado.onclick = async () => {
+            let id = inputIdEmpleado.value;
+            let nombre = inputNombreEmpleado.value;
+            let apellidos = inputApellidosEmpleado.value;
+            let fechaNacimiento = inputFechaNacimientoEmpleado.value;
+            let fechaIngreso = inputFechaIngresoEmpleado.value;
+            if (validate(nombre, apellidos, fechaNacimiento)){
+                const data = {
+                    'Id': id,
+                    'NombreEmpleado': nombre,
+                    'ApellidosEmpleado': apellidos,
+                    'FechaNacimiento': fechaNacimiento,
+                    'FechaIngreso': fechaIngreso,
+                };
+                if (btnSaveEmpleado.textContent === "Grabar") {
+                    url = "../Empleado/save";
+                    method = "POST"
+                    messageTxt = "Empleado ingresado";
+                } else {
+                    url = "../Empleado/update";
+                    method = "PUT"
+                    messageTxt = "Empleado actualizado";
+                }
+                let response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': "application/json; charset=utf-8" },
+                    body: JSON.stringify(data),
+                });
+                response = await response.json();
+                if (response.id > 0) {
+                    await loadData();
+                    message("alertaOK", messageTxt);
+                    reset();
+                    $("#modalNuevoPaciente").modal("hide");
+                } else if (response.id < 0) {
+                    message("alertaError", "Error! No se pudo enviar la solicitud");
+                } else {
+                    message("alertaError", "Error! Con la recepción de la solicitud");
+                }
+            };
+        };
+
+    }, false);
+</script>

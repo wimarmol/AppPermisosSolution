@@ -1,0 +1,98 @@
+﻿@model BLL.Empleado;
+@{
+}
+<div class="container-fluid">
+    <h5>Ingresar nuevo permiso para: @Model.NombreEmpleado @Model.ApellidosEmpleado</h5>
+    <div class="card">
+        <div class="card-body">        
+                <input id="inputIdEmpleado" value="@Model.Id" type="hidden">
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="selectTipoPermiso">Tipo permiso</label>
+                            <select class="form-control browser-default custom-select " id="selectTipoPermiso" 
+                                    asp-items='@(new SelectList(ViewBag.TipoPermisos,"Id","Descripcion"))'
+                                    >
+                                <option value=0>Seleccione tipo permiso.. </option>
+                            </select>                            
+                            <div id="alertaSelectTipoPermiso" class="message-error-tooltip hide"></div>
+                        </div>                        
+                        <div class="col-md-6 mt-3">
+                            <label for="inputFechaHoraInicio">Fecha hora inicio</label>
+                            <input type="datetime-local" class="form-control" id="inputFechaHoraInicio">
+                            <div id="alertaInputFechaHoraInicio" class="message-error-tooltip hide"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label for="inputFechaHoraFin">Fecha hora fin</label>
+                            <input type="datetime-local" class="form-control" id="inputFechaHoraFin">
+                            <div id="alertaInputFechaHoraFin" class="message-error-tooltip hide"></div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <div class="card-footer text-right">
+            <a class="btn btn-sm btn-secondary text-white" asp-controller="Permiso" asp-action="index">Cancelar</a>
+            <button type="button" class="btn btn-sm btn-primary" id="btnSavePermiso">Grabar</button>
+        </div>
+    </div>
+</div>
+<script>
+    window.addEventListener('load', async () => {
+        inputFechaHoraInicio.value = dateTimeSet(new Date());
+        inputFechaHoraFin.value = dateTimeSet(new Date());
+        const validate = (tipoPermisoId, fechaHoraInicioPermiso, fechaHoraFinPermiso) => {
+            let valid = true;
+            let difference = (new Date(fechaHoraFinPermiso)) - (new Date(fechaHoraInicioPermiso));
+            let differenceDays = Math.ceil(difference / (1000 * 3600 * 24));
+            if (difference <= 0) {
+                alertMessage("inputFechaHoraInicio", "alertaInputFechaHoraInicio", "La fecha inicial debe ser menor a la fecha final");
+                valid = false;
+            };
+            if (differenceDays > 30) {
+                alertMessage("inputFechaHoraFin", "alertaInputFechaHoraFin", "El permiso no debe ser mayor a 30 días");
+                valid = false;
+            };
+            if (tipoPermisoId == 0) {
+                alertMessage("selectTipoPermiso", "alertaSelectTipoPermiso", "Seleccione un tipo de permiso");
+                valid = false;
+            };
+            return valid;
+        };
+
+        btnSavePermiso.onclick = async () => {
+            let empleadId = inputIdEmpleado.value;
+            let tipoPermisoId = selectTipoPermiso.value;
+            let fechaHoraInicioPermiso = inputFechaHoraInicio.value;
+            let fechaHoraFinPermiso = inputFechaHoraFin.value;
+            console.log(tipoPermisoId);
+            if (validate(tipoPermisoId, fechaHoraInicioPermiso, fechaHoraFinPermiso)) {
+                const data = {
+                    'Id': 0,
+                    'EmpleadoId': empleadId,
+                    'TipoPermisoId': tipoPermisoId,
+                    'FechaHoraInicioPermiso': fechaHoraInicioPermiso,
+                    'FechaHoraFinPermiso': fechaHoraFinPermiso,
+                };                
+                let url = "../../Permiso/save";
+                let method = "POST"
+                let messageTxt = "Permiso registrado";                                                    
+                let response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': "application/json; charset=utf-8" },
+                    body: JSON.stringify(data),
+                });
+                response = await response.json();
+                if (response.id > 0) {                    
+                    message("alertaOK", messageTxt);
+                    setTimeout(() => {
+                        window.location.href = "/Permiso/PermisosEmpleado/" + empleadId;
+                    }, 2100);
+                } else if (response.id < 0) {
+                    message("alertaError", "Error! No se pudo enviar la solicitud");
+                } else {
+                    message("alertaError", "Existe permisos registrados en el rango de fechas que seleccionó");
+                }
+            };
+        };
+    }, false);
+</script>
