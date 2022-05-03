@@ -2,6 +2,9 @@
 
 1 - Descargar o clonar el repositorio
 
+    La solución esta compuesta por tres capas, la primer es la capa DAL de acceso a datos (Data acces layer), la segunda es la capa BLL (Bussines logic layer)
+    capa de lógica de negocio y la capade presentación de la aplicación web MVC WebApp, esta última debe establecerse como proyecto de inicio.
+
 2 - Ejecutar sobre una sintacia de SqlServer, el archivo "Create_all.sql", este crea:
 
     - La Base de datos
