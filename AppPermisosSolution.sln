@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BBDD", "BBDD", "{5B65CC88-6680-45D0-AA8D-4C419628842D}"
 	ProjectSection(SolutionItems) = preProject
 		Create_all.sql = Create_all.sql
+		DER.jpg = DER.jpg
 	EndProjectSection
 EndProject
 Global
